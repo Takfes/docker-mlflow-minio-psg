@@ -1,8 +1,8 @@
 ### INSTRUCTIONS
 
-docker-compose up -d
-docker-compose down
-docker-compose logs minio
+* docker-compose up -d
+* docker-compose down
+* docker-compose logs minio
 
 ### TODO
 
