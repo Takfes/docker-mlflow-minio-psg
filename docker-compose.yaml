@@ -1,0 +1,57 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+    volumes: 
+      - ./postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    volumes:
+      - ./minio_data:/data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "0.0.0.0:9000:9000"
+      - "0.0.0.0:9001:9001"
+    command: server /data --address ":9000" --console-address ":9001"
+
+  mlflow:
+    build:
+      context: mlflow
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5000"
+    environment:
+      BACKEND_STORE_URI: ${BACKEND_STORE_URI}
+      ARTIFACTS_STORE_URI: ${ARTIFACTS_STORE_URI}
+    volumes:
+      - ./mlflow:/mlflow
+    entrypoint: mlflow server --backend-store-uri ${BACKEND_STORE_URI} --default-artifact-root ${ARTIFACTS_STORE_URI}/ --artifacts-destination ${ARTIFACTS_STORE_URI}/ -h 0.0.0.0
+    depends_on:
+      - postgres
+      - minio
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  minio_data:
